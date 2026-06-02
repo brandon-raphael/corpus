@@ -20,6 +20,14 @@ bun .agents/skills/canon/scripts/check-file-size.ts
 bun .agents/skills/canon/scripts/check-file-size.ts --fail --threshold 1000
 ```
 
+For a TypeScript lint/config audit, run Canon doctor from the project root:
+
+```bash
+bun .agents/skills/canon/scripts/doctor.ts
+```
+
+Use doctor only when linting/configuration is part of the task, when the user asks for a lint setup review, or when lint output suggests the project lacks Canon-aligned TypeScript guardrails. Do not run it during ordinary implementation just because Canon is active.
+
 For examples, see [EXAMPLES.md](EXAMPLES.md).
 
 ## Before coding
@@ -83,6 +91,30 @@ Fallbacks are presumptively guilty.
 - Do not maintain duplicate old and new paths merely for compatibility unless explicitly required.
 - Refactor call sites to the better contract instead of adding adapters around bad code.
 - Remove obsolete branches, wrappers, and compatibility shims when the better model replaces them.
+
+## TypeScript lint/config guardrails
+
+When linting or reviewing lint setup in a TypeScript project, prefer compiler-owned invariants before linter approximations. Check for these `tsconfig.json` flags before adding lint rules that duplicate them:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}
+```
+
+For Oxlint, scope Canon's stricter TypeScript lint rules to TypeScript files with an override such as `**/*.{ts,tsx}`. This keeps JavaScript files from inheriting TypeScript-only expectations while preserving strong guardrails where TypeScript can enforce them. Recommended Oxlint plugins are `typescript`, `react`, `react-hooks`, `jsx-a11y`, `import`, `promise`, `unicorn`, and `oxc`.
+
+Canon-aligned Oxlint rules for TypeScript files should emphasize explicit boundaries, exhaustive control flow, and no hidden fallbacks: no explicit `any`, no unsafe `any` operations, no non-null assertions, no optional chaining as a default escape hatch, exhaustive switches, promise misuse checks, no raw `console`, no empty blocks/functions, no nested ternaries, no throw literals, duplicate import checks, and React hook/dependency checks when React is present.
+
+Use `scripts/doctor.ts` to audit this setup on demand instead of loading these details into every implementation task.
 
 ## Verification
 
